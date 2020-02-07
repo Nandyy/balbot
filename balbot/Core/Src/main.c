@@ -26,11 +26,12 @@
 /* USER CODE BEGIN Includes */
 #include <stdio.h>
 #include <string.h>
+#include "I2Cdev.h"
+#include "MPU6050.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -39,10 +40,6 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-typedef enum {
-	FALSE = 0,
-	TRUE
-} bool;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
@@ -141,6 +138,11 @@ int main(void)
   MX_USB_OTG_FS_PCD_Init();
   MX_I2C1_Init();
   /* USER CODE BEGIN 2 */
+  I2Cdev_init(&hi2c1); // init of i2cdevlib.
+
+  MPU6050_initialize();
+  while(!MPU6050_testConnection());
+  printf("MPU6050 Device OK!!!\r\n");
 
   /* USER CODE END 2 */
   /* Init scheduler */
@@ -491,16 +493,16 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
 
 bool RawKeyPressed(void)
 {
-	if(GPIO_PIN_RESET == HAL_GPIO_ReadPin(GPIOC, USER_Btn_Pin)) return TRUE;
-	else return FALSE;
+	if(GPIO_PIN_RESET == HAL_GPIO_ReadPin(GPIOC, USER_Btn_Pin)) return true;
+	else return false;
 }
 
 bool DebounceSwitch(void)
 {
   static uint16_t State = 0;
   State = (State << 1) | !RawKeyPressed() | 0xe000;
-  if(State == 0xf000) return TRUE;
-  else return FALSE;
+  if(State == 0xf000) return true;
+  else return false;
 }
 /* USER CODE END 4 */
 
@@ -545,12 +547,12 @@ void StartLEDTask(void *argument)
 void StartButtonTask(void *argument)
 {
   /* USER CODE BEGIN StartButtonTask */
-  bool debounced = FALSE;
+  bool debounced = false;
   /* Infinite loop */
   for(;;)
   {
 	if(debounced) {
-	  debounced = FALSE;
+	  debounced = false;
       osSemaphoreRelease(buttonBinarySemHandle);
       printf("Releaseing Btn Semaphore\r\n");
 	}
